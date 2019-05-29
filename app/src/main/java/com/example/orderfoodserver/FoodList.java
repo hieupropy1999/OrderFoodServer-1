@@ -11,6 +11,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.ContextMenu;
@@ -70,8 +71,9 @@ public class FoodList extends AppCompatActivity {
         foodList = FirebaseDatabase.getInstance().getReference("Food");
         recyclerView = (RecyclerView)findViewById(R.id.recycler_food);
         recyclerView.setHasFixedSize(true);
-        layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
+        //layoutManager = new LinearLayoutManager(this);
+        //recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         rootLayout=(RelativeLayout)findViewById(R.id.rootLayout);
 
         storage = FirebaseStorage.getInstance();
@@ -193,12 +195,6 @@ public class FoodList extends AppCompatActivity {
     }
 
     private void loadListFood(String CategoryId) {
-
-//        Query listFoodByCategory = foodList.orderByChild("meunuId").equalTo(CategoryId);
-//
-//        FirebaseRecyclerOptions<Food> options = new  FirebaseRecyclerOptions.Builder<Food>()
-//                .setQuery(listFoodByCategory, Food.class).build();
-
         Query listFoodByCategory = foodList.orderByChild("menuId").equalTo(CategoryId);
         //Create options with query
         FirebaseRecyclerOptions<Food> options = new FirebaseRecyclerOptions.Builder<Food>()
@@ -208,6 +204,7 @@ public class FoodList extends AppCompatActivity {
             @Override
             protected void onBindViewHolder(@NonNull FoodViewHolder holder, int position, @NonNull Food model) {
                 holder.food_name.setText(model.getName());
+                holder.food_price.setText(model.getPrice());
                 Picasso.with(getBaseContext()).load(model.getImage())
                         .into(holder.food_image);
                 final Food local = model;

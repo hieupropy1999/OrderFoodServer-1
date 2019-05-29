@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -110,9 +111,10 @@ public class Home extends AppCompatActivity
         //Khoi tao view
         list_menu = (RecyclerView)findViewById(R.id.recycler_menu);
         list_menu.setHasFixedSize(true);
-        LinearLayoutManager layoutManager;
-        layoutManager = new LinearLayoutManager(this);
-        list_menu.setLayoutManager(layoutManager);
+        //LinearLayoutManager layoutManager;
+        //layoutManager = new LinearLayoutManager(this);
+        //list_menu.setLayoutManager(layoutManager);
+        list_menu.setLayoutManager(new GridLayoutManager(this, 2));
         loadMenu();
     }
 
