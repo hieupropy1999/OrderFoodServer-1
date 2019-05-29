@@ -194,11 +194,16 @@ public class FoodList extends AppCompatActivity {
 
     private void loadListFood(String CategoryId) {
 
-        Query listFoodByCategory = foodList.orderByChild("meunuId").equalTo(CategoryId);
+//        Query listFoodByCategory = foodList.orderByChild("meunuId").equalTo(CategoryId);
+//
+//        FirebaseRecyclerOptions<Food> options = new  FirebaseRecyclerOptions.Builder<Food>()
+//                .setQuery(listFoodByCategory, Food.class).build();
 
-        FirebaseRecyclerOptions<Food> options = new  FirebaseRecyclerOptions.Builder<Food>()
-                .setQuery(listFoodByCategory, Food.class).build();
-
+        Query listFoodByCategory = foodList.orderByChild("menuId").equalTo(CategoryId);
+        //Create options with query
+        FirebaseRecyclerOptions<Food> options = new FirebaseRecyclerOptions.Builder<Food>()
+                .setQuery(listFoodByCategory,Food.class)
+                .build();
         adapter = new FirebaseRecyclerAdapter<Food, FoodViewHolder>(options) {
             @Override
             protected void onBindViewHolder(@NonNull FoodViewHolder holder, int position, @NonNull Food model) {
