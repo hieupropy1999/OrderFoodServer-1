@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -19,10 +20,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import info.hoang8f.widget.FButton;
+import io.paperdb.Paper;
 
 public class Dangnhap extends AppCompatActivity {
     EditText edtsdt,edtmk;
     Button btndangnhap1;
+    CheckBox ckbRemember;
     FirebaseDatabase database;
     DatabaseReference users;
     @Override
@@ -32,13 +35,22 @@ public class Dangnhap extends AppCompatActivity {
         btndangnhap1=(FButton)findViewById(R.id.btndangnhap1);
         edtsdt=(EditText)findViewById(R.id.edtsdt);
         edtmk=(EditText)findViewById(R.id.edtmk);
+        ckbRemember = (CheckBox)findViewById(R.id.ckbRemember);
         //
+
+        Paper.init(this);
+
         database = FirebaseDatabase.getInstance();
         users = database.getReference("User");
         btndangnhap1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(edtsdt.getText().toString().isEmpty() ||edtmk.getText().toString().isEmpty()){
+                // save user name and password
+                if (ckbRemember.isChecked()) {
+                    Paper.book().write(Common.USER_KEY, edtsdt.getText().toString());
+                    Paper.book().write(Common.PWD_KEY, edtmk.getText().toString());
+                }
+                if(edtsdt.getText().toString().isEmpty() || edtmk.getText().toString().isEmpty()){
                     Toast.makeText(Dangnhap.this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
                 }
                 signInUser(edtsdt.getText().toString(),edtmk.getText().toString());

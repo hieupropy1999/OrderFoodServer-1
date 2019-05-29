@@ -23,18 +23,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.orderfoodserver.Common.Common;
 import com.example.orderfoodserver.Interface.ItemClickListener;
 import com.example.orderfoodserver.Model.Category;
+import com.example.orderfoodserver.Model.Food;
+import com.example.orderfoodserver.ViewHolder.FoodViewHolder;
 import com.example.orderfoodserver.ViewHolder.MenuViewHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -45,6 +53,7 @@ import com.squareup.picasso.Picasso;
 import java.util.UUID;
 
 import info.hoang8f.widget.FButton;
+import io.paperdb.Paper;
 
 public class Home extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -75,6 +84,9 @@ public class Home extends AppCompatActivity
         category= FirebaseDatabase.getInstance().getReference("Category");
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
+
+        Paper.init(this);
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -212,15 +224,20 @@ public class Home extends AppCompatActivity
     }
 
     private void loadMenu() {
-        adapter = new FirebaseRecyclerAdapter<Category, MenuViewHolder>(Category.class,R.layout.menu_item,MenuViewHolder.class,category){
+
+        FirebaseRecyclerOptions<Category> options = new  FirebaseRecyclerOptions.Builder<Category>()
+                .setQuery(category, Category.class).build();
+
+
+        adapter = new FirebaseRecyclerAdapter<Category, MenuViewHolder>(options) {
             @Override
-            protected void populateViewHolder(MenuViewHolder viewHolder, Category model, int position) {
-                viewHolder.txtMenuName.setText(model.getName());
+            protected void onBindViewHolder(@NonNull MenuViewHolder holder, int position, @NonNull Category model) {
+                holder.txtMenuName.setText(model.getName());
                 Picasso.with(getBaseContext()).load(model.getImage())
-                        .into(viewHolder.imageView);
+                        .into(holder.imageView);
 
                 //final Category clickItem = model;
-                viewHolder.setItemClickListener(new ItemClickListener() {
+                holder.setItemClickListener(new ItemClickListener() {
                     @Override
                     public void onClick(View view, int position, boolean isLongClick) {
                         //Lấy CategoryId và gửi nó đến Activity mới
@@ -230,11 +247,26 @@ public class Home extends AppCompatActivity
                         startActivity(foodList);
                     }
                 });
+            }
 
+            @Override
+            public MenuViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                View itemView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.menu_item, parent, false);
+
+                return new MenuViewHolder(itemView);
             }
         };
+        adapter.startListening();
+
         adapter.notifyDataSetChanged();//Refresh dữ liệu khi dữ liệu thay đổi
         list_menu.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        adapter.stopListening();
     }
 
     @Override
@@ -275,14 +307,25 @@ public class Home extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_menu) {
-            //
-        } else if (id == R.id.nav_cart) {
+        if (id == R.id.nav_orders) {
+            Intent orders = new Intent(Home.this, OrderStatus.class);
+            startActivity(orders);
+        }
+        else if (id == R.id.nav_banner) {
+            Intent banner = new Intent(Home.this, BannerActivity.class);
+            startActivity(banner);
+        }
+        else if (id == R.id.nav_menu) {
+            Intent menu = new Intent(Home.this, Home.class);
+            startActivity(menu);
+        }
+        else if (id == R.id.nav_logout) {
+            // delete remember user & pwd
+            Paper.book().destroy();
 
-        } else if (id == R.id.nav_orders) {
-
-        } else if (id == R.id.nav_logout) {
-
+            Intent signIn = new Intent(Home.this, Dangnhap.class);
+            signIn.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(signIn);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -303,6 +346,24 @@ public class Home extends AppCompatActivity
     }
 
     private void deleteCategory(String key) {
+
+        DatabaseReference foods = FirebaseDatabase.getInstance().getReference("Food");
+        Query foodInCategory = foods.orderByChild("menuId").equalTo(key);
+
+        foodInCategory.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot postSnapshot:dataSnapshot.getChildren()) {
+                    postSnapshot.getRef().removeValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
         category.child(key).removeValue();
         Toast.makeText(this,"Đã xóa !",Toast.LENGTH_SHORT).show();
     }

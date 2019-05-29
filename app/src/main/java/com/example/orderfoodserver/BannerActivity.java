@@ -13,7 +13,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,17 +21,17 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.example.orderfoodserver.Common.Common;
-import com.example.orderfoodserver.Interface.ItemClickListener;
-import com.example.orderfoodserver.Model.Category;
+import com.example.orderfoodserver.Model.Banner;
 import com.example.orderfoodserver.Model.Food;
-import com.example.orderfoodserver.ViewHolder.FoodViewHolder;
+import com.example.orderfoodserver.ViewHolder.BannerViewHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -40,132 +39,169 @@ import com.google.firebase.storage.UploadTask;
 import com.rengwuxian.materialedittext.MaterialEditText;
 import com.squareup.picasso.Picasso;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import info.hoang8f.widget.FButton;
 
-public class FoodList extends AppCompatActivity {
+public class BannerActivity extends AppCompatActivity {
+
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
     RelativeLayout rootLayout;
-    //FirebaseDatabase database;
-    DatabaseReference foodList;
-    String CategoryId = "";
-    FirebaseRecyclerAdapter<Food, FoodViewHolder> adapter;
     FloatingActionButton fab;
+
+    //fire base
+    DatabaseReference banners;
     FirebaseStorage storage;
     StorageReference storageReference;
-    // Add new food
-    MaterialEditText edtName, edtDescription, edtPrice;
-    FButton btnSelect, btnUpload;
-    Food newFood;
 
-    Uri saveUri;
+    FirebaseRecyclerAdapter<Banner, BannerViewHolder> adapter;
+
+    // add new banner
+    MaterialEditText edtName, edtFoodId;
+    FButton btnUpload, btnSelect;
+
+    Banner newBanner;
+    Uri filePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_food_list);
-        //Firebase
-        foodList = FirebaseDatabase.getInstance().getReference("Food");
-        recyclerView = (RecyclerView)findViewById(R.id.recycler_food);
+        setContentView(R.layout.activity_banner);
+
+        // init firebase
+        banners = FirebaseDatabase.getInstance().getReference("Banner");
+        storage = FirebaseStorage.getInstance();
+        storageReference = storage.getReference();
+
+        recyclerView = (RecyclerView)findViewById(R.id.recycler_banner);
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         rootLayout=(RelativeLayout)findViewById(R.id.rootLayout);
 
-        storage = FirebaseStorage.getInstance();
-        storageReference = storage.getReference();
-        //Nhận giá trị Intent gửi đi
-        if(getIntent() != null){
-            CategoryId = getIntent().getStringExtra("CategoryId");
-        }
-        if(!CategoryId.isEmpty() && CategoryId !=null){
-            loadListFood(CategoryId);
-        }
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showAddFoodDialog();
+                showAddBanner();
             }
         });
+
+        loadListBanner();
     }
 
-    private void showAddFoodDialog() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(FoodList.this);
-        alertDialog.setTitle("Thêm món ăn");
+    private void loadListBanner() {
+        final FirebaseRecyclerOptions<Banner> allBanner = new FirebaseRecyclerOptions.Builder<Banner>()
+                .setQuery(banners, Banner.class)
+                .build();
+
+        adapter = new FirebaseRecyclerAdapter<Banner, BannerViewHolder>(allBanner) {
+            @Override
+            protected void onBindViewHolder(BannerViewHolder holder, int position, Banner model) {
+                holder.banner_name.setText(model.getName());
+                Picasso.with(getBaseContext())
+                        .load(model.getImage())
+                        .into(holder.banner_image);
+            }
+
+            @Override
+            public BannerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                View itemView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.banner_layout, parent, false);
+
+                return new BannerViewHolder(itemView);
+            }
+        };
+        adapter.startListening();
+
+        adapter.notifyDataSetChanged();
+        recyclerView.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        adapter.stopListening();
+    }
+
+    private void showAddBanner() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(BannerActivity.this);
+        alertDialog.setTitle("Thêm biểu ngữ");
         alertDialog.setMessage("Vui lòng điền đầy đủ thông tin");
 
         LayoutInflater inflater = this.getLayoutInflater();
-        View add_food_layout = inflater.inflate(R.layout.add_new_food_layout, null);
+        View v = inflater.inflate(R.layout.add_new_banner, null);
 
-        edtName = add_food_layout.findViewById(R.id.edtName);
-        edtDescription = add_food_layout.findViewById(R.id.edtDescription);
-        edtPrice = add_food_layout.findViewById(R.id.edtPrice);
-        btnSelect = add_food_layout.findViewById(R.id.btnSelect);
-        btnUpload = add_food_layout.findViewById(R.id.btnUpload);
+        edtFoodId = v.findViewById(R.id.edtFoodId);
+        edtName = v.findViewById(R.id.edtFoodName);
 
-        //Tạo sự kiện cho Button
+        btnSelect = v.findViewById(R.id.btnSelect);
+        btnUpload = v.findViewById(R.id.btnUpload);
+
         btnSelect.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                chooseImage();// Người dùng chọn ảnh từ thư viện và lưu Uri của ảnh này
+            public void onClick(View view) {
+                chooseImage();
             }
         });
+
         btnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                uploadImage();
+            public void onClick(View view) {
+                uploadPicture();
             }
         });
-        alertDialog.setView(add_food_layout);
-        alertDialog.setIcon(R.drawable.add);
-        //Thiết lập button
+
+        alertDialog.setView(v);
+        alertDialog.setIcon(R.drawable.ic_laptop_black_24dp);
+
+        // set button for dialog
         alertDialog.setPositiveButton("Hoàn tất", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-
-                // Tạo một loại món ăn mới trên database
-                if (newFood != null){
-                    foodList.push().setValue(newFood);
-                    Snackbar.make(rootLayout, newFood.getName()+" đã được thêm", Snackbar.LENGTH_SHORT)
-                            .show();
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+                if (newBanner != null) {
+                    banners.push().setValue(newBanner);
                 }
+                loadListBanner();
             }
         });
+
         alertDialog.setNegativeButton("Thoát", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+                newBanner = null;
+                loadListBanner();
             }
         });
+
         alertDialog.show();
     }
 
-    private void uploadImage() {
-        if(saveUri != null){
+    private void uploadPicture() {
+        if(filePath != null){
             final ProgressDialog mDialog = new ProgressDialog(this);
             mDialog.setMessage("Đang tải lên");
             mDialog.show();
             String imageName = UUID.randomUUID().toString();
             final StorageReference imageFolder = storageReference.child("images/"+imageName);
-            imageFolder.putFile(saveUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            imageFolder.putFile(filePath).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     mDialog.dismiss();
-                    Toast.makeText(FoodList.this,"Đã tải lên",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BannerActivity.this,"Đã tải lên",Toast.LENGTH_SHORT).show();
                     imageFolder.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                         @Override
                         public void onSuccess(Uri uri) {
                             //Thiết lập giá trị cho món ăn mới nếu ảnh đc tải lên và ta có thể download link
-                            newFood = new Food();
-                            newFood.setName(edtName.getText().toString());
-                            newFood.setDescription(edtDescription.getText().toString());
-                            newFood.setPrice(edtPrice.getText().toString());
-                            newFood.setMenuId(CategoryId);
-                            newFood.setImage(uri.toString());
+                            newBanner = new Banner();
+                            newBanner.setName(edtName.getText().toString());
+                            newBanner.setId(edtFoodId.getText().toString());
+                            newBanner.setImage(uri.toString());
                         }
                     });
                 }
@@ -173,7 +209,7 @@ public class FoodList extends AppCompatActivity {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     mDialog.dismiss();
-                    Toast.makeText(FoodList.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BannerActivity.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
                 }
             }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                 @Override
@@ -192,93 +228,49 @@ public class FoodList extends AppCompatActivity {
         startActivityForResult(Intent.createChooser(intent,"Chọn ảnh"), Common.PICK_IMAGE_REQUEST);
     }
 
-    private void loadListFood(String CategoryId) {
-
-        Query listFoodByCategory = foodList.orderByChild("meunuId").equalTo(CategoryId);
-
-        FirebaseRecyclerOptions<Food> options = new  FirebaseRecyclerOptions.Builder<Food>()
-                .setQuery(listFoodByCategory, Food.class).build();
-
-        adapter = new FirebaseRecyclerAdapter<Food, FoodViewHolder>(options) {
-            @Override
-            protected void onBindViewHolder(@NonNull FoodViewHolder holder, int position, @NonNull Food model) {
-                holder.food_name.setText(model.getName());
-                Picasso.with(getBaseContext()).load(model.getImage())
-                        .into(holder.food_image);
-                final Food local = model;
-                holder.setItemClickListener(new ItemClickListener() {
-                    @Override
-                    public void onClick(View view, int position, boolean isLongClick) {
-                        //code late
-                    }
-                });
-            }
-
-            @Override
-            public FoodViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View itemView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.food_item, parent, false);
-
-                return new FoodViewHolder(itemView);
-            }
-        };
-
-        adapter.startListening();
-
-        // Thiết lập adapter
-        adapter.notifyDataSetChanged();
-        recyclerView.setAdapter(adapter);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        adapter.stopListening();
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == Common.PICK_IMAGE_REQUEST && resultCode == RESULT_OK
                 && data!=null && data.getData() !=null)
         {
-            saveUri = data.getData();
+            filePath = data.getData();
             btnSelect.setText("Ảnh đã chọn !");
-
         }
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         if (item.getTitle().equals(Common.UPDATE)){
-            showUpdateFoodDialog(adapter.getRef(item.getOrder()).getKey(), adapter.getItem(item.getOrder()));
+            showUpdateBannerDialog(adapter.getRef(item.getOrder()).getKey(), adapter.getItem(item.getOrder()));
         }if (item.getTitle().equals(Common.DELETE)){
-            deleteFood(adapter.getRef(item.getOrder()).getKey());
+            deleteBbanner(adapter.getRef(item.getOrder()).getKey());
         }
         return super.onContextItemSelected(item);
     }
 
-    private void deleteFood(String key) {
-        foodList.child(key).removeValue();
+    private void deleteBbanner(String key) {
+        banners.child(key).removeValue();
     }
 
-    private void showUpdateFoodDialog(final String key, final Food item) {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(FoodList.this);
-        alertDialog.setTitle("Cập nhật món ăn");
+    private void showUpdateBannerDialog(final String key, final Banner item) {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(BannerActivity.this);
+        alertDialog.setTitle("Cập nhật biểu mẫu");
         alertDialog.setMessage("Vui lòng điền đầy đủ thông tin");
 
         LayoutInflater inflater = this.getLayoutInflater();
-        View add_food_layout = inflater.inflate(R.layout.add_new_food_layout, null);
+        View edit_banner = inflater.inflate(R.layout.add_new_banner, null);
 
-        edtName = add_food_layout.findViewById(R.id.edtName);
-        edtDescription = add_food_layout.findViewById(R.id.edtDescription);
-        edtPrice = add_food_layout.findViewById(R.id.edtPrice);
-        btnSelect = add_food_layout.findViewById(R.id.btnSelect);
-        btnUpload = add_food_layout.findViewById(R.id.btnUpload);
+        edtName = edit_banner.findViewById(R.id.edtFoodName);
+        edtFoodId = edit_banner.findViewById(R.id.edtFoodId);
+
         //THiết lập giá trị mặc định
         edtName.setText(item.getName());
-        edtDescription.setText(item.getDescription());
-        edtPrice.setText(item.getPrice());
+        edtFoodId.setText(item.getId());
+
+        btnSelect = edit_banner.findViewById(R.id.btnSelect);
+        btnUpload = edit_banner.findViewById(R.id.btnUpload);
+        
         //Tạo sự kiện cho Button
         btnSelect.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -286,49 +278,69 @@ public class FoodList extends AppCompatActivity {
                 chooseImage();// Người dùng chọn ảnh từ thư viện và lưu Uri của ảnh này
             }
         });
+        
         btnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 changeImage(item);
             }
         });
-        alertDialog.setView(add_food_layout);
-        alertDialog.setIcon(R.drawable.add);
+        
+        alertDialog.setView(edit_banner);
+        alertDialog.setIcon(R.drawable.ic_laptop_black_24dp);
+
         //Thiết lập button
         alertDialog.setPositiveButton("Hoàn tất", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                // Tạo một loại món ăn mới trên database
-                    item.setName(edtName.getText().toString());
-                    item.setPrice(edtPrice.getText().toString());
-                    item.setDescription(edtDescription.getText().toString());
-                    foodList.child(key).setValue(item);
-                    Snackbar.make(rootLayout, item.getName()+" đã được thêm", Snackbar.LENGTH_SHORT)
-                            .show();
+
+                item.setId(edtFoodId.getText().toString());
+                item.setName(edtName.getText().toString());
+
+                Map<String, Object> update = new HashMap<>();
+                update.put("id", item.getId());
+                update.put("image", item.getImage());
+                update.put("name", item.getName());
+
+                banners.child(key)
+                        .updateChildren(update)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                Snackbar.make(rootLayout, "Cập nhật", Snackbar.LENGTH_SHORT).show();
+                                loadListBanner();
+                            }
+                        });
+
+                Snackbar.make(rootLayout, item.getName()+" đã được thêm", Snackbar.LENGTH_SHORT)
+                        .show();
+
+                loadListBanner();
             }
         });
         alertDialog.setNegativeButton("Thoát", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
+                loadListBanner();
             }
         });
         alertDialog.show();
     }
 
-    private void changeImage(final Food item) {
-        if(saveUri != null){
+    private void changeImage(final Banner item) {
+        if(filePath != null){
             final ProgressDialog mDialog = new ProgressDialog(this);
             mDialog.setMessage("Đang tải lên");
             mDialog.show();
             String imageName = UUID.randomUUID().toString();
             final StorageReference imageFolder = storageReference.child("images/"+imageName);
-            imageFolder.putFile(saveUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            imageFolder.putFile(filePath).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     mDialog.dismiss();
-                    Toast.makeText(FoodList.this,"Đã tải lên",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BannerActivity.this,"Đã tải lên",Toast.LENGTH_SHORT).show();
                     imageFolder.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                         @Override
                         public void onSuccess(Uri uri) {
@@ -342,7 +354,7 @@ public class FoodList extends AppCompatActivity {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     mDialog.dismiss();
-                    Toast.makeText(FoodList.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BannerActivity.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
                 }
             }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                 @Override
