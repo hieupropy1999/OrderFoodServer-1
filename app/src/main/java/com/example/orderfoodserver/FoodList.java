@@ -235,6 +235,13 @@ public class FoodList extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
+    protected void onResume() {
+        super.onResume();
+        if(adapter!= null)
+            adapter.startListening();
+
+    }
+
     @Override
     protected void onStop() {
         super.onStop();

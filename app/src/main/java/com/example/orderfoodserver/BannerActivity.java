@@ -127,6 +127,13 @@ public class BannerActivity extends AppCompatActivity {
         adapter.stopListening();
     }
 
+    protected void onResume() {
+        super.onResume();
+        if(adapter!= null)
+            adapter.startListening();
+
+    }
+
     private void showAddBanner() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(BannerActivity.this);
         alertDialog.setTitle("Thêm biểu ngữ");

@@ -121,6 +121,13 @@ public class OrderStatus extends AppCompatActivity {
         adapter.stopListening();
     }
 
+    protected void onResume() {
+        super.onResume();
+        if(adapter!= null)
+            adapter.startListening();
+
+    }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         if (item.getTitle().equals(Common.UPDATE))
