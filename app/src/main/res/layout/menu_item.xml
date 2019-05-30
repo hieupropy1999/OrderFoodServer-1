@@ -24,7 +24,7 @@
             android:textColor="#ffff"
             android:id="@+id/menu_name"
             android:text="Tên Món"
-            android:background="#8D958B"
+            android:background="#4f0e0d0e"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
