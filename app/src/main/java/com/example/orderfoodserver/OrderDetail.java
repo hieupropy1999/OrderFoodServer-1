@@ -38,11 +38,14 @@ public class OrderDetail extends AppCompatActivity {
 
         // set value
         order_id.setText(order_id_value);
-        order_phone.setText(Common.currentRequest.getPhone());
-        order_total.setText(Common.currentRequest.getTotal());
-        order_address.setText(Common.currentRequest.getAddress());
-        order_comment.setText(Common.currentRequest.getComment());
-
+        order_phone.setText(String.format("Người dùng: %s", Common.currentRequest.getPhone()));
+        order_total.setText(String.format("Tổng tiền: %s", Common.currentRequest.getTotal()));
+        order_address.setText(String.format("Địa chỉ: %s", Common.currentRequest.getAddress()));
+        String note = Common.currentRequest.getComment().toString();
+        if (note.isEmpty())
+            order_comment.setText("Lời dặn: Không có");
+        else
+            order_comment.setText(String.format("Lời dặn: %s", Common.currentRequest.getComment()));
         OrderDetailAdapter adapter = new OrderDetailAdapter(Common.currentRequest.getFoods());
         adapter.notifyDataSetChanged();
         lstFoods.setAdapter(adapter);

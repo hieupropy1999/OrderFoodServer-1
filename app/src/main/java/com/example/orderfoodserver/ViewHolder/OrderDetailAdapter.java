@@ -14,7 +14,7 @@ import java.util.List;
 
 class MyViewHolder extends RecyclerView.ViewHolder {
 
-    public TextView name, quantity, price;
+    public TextView name, quantity, price, note;
 
     public MyViewHolder(@NonNull View itemView) {
         super(itemView);
@@ -22,6 +22,7 @@ class MyViewHolder extends RecyclerView.ViewHolder {
         name = (TextView) itemView.findViewById(R.id.product_name);
         quantity = (TextView) itemView.findViewById(R.id.product_quantity);
         price = (TextView) itemView.findViewById(R.id.product_price);
+        note = (TextView) itemView.findViewById(R.id.product_note);
     }
 }
 public class OrderDetailAdapter extends RecyclerView.Adapter<MyViewHolder> {
@@ -47,6 +48,7 @@ public class OrderDetailAdapter extends RecyclerView.Adapter<MyViewHolder> {
         myViewHolder.name.setText(String.format("Tên món ăn: %s", order.getProductName()));
         myViewHolder.quantity.setText(String.format("Số lượng: %s", order.getQuantity()));
         myViewHolder.price.setText(String.format("Giá: %s", order.getPrice()));
+        myViewHolder.note.setText(String.format("Note: %s", order.getComment()));
     }
 
     @Override
