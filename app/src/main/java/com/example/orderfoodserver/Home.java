@@ -32,6 +32,7 @@ import com.example.orderfoodserver.Common.Common;
 import com.example.orderfoodserver.Interface.ItemClickListener;
 import com.example.orderfoodserver.Model.Category;
 import com.example.orderfoodserver.Model.Food;
+import com.example.orderfoodserver.Model.Token;
 import com.example.orderfoodserver.ViewHolder.FoodViewHolder;
 import com.example.orderfoodserver.ViewHolder.MenuViewHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -44,6 +45,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -116,6 +118,15 @@ public class Home extends AppCompatActivity
         //list_menu.setLayoutManager(layoutManager);
         list_menu.setLayoutManager(new GridLayoutManager(this, 2));
         loadMenu();
+
+        //
+        updateToken(FirebaseInstanceId.getInstance().getToken());
+    }
+
+    private void updateToken(String token) {
+        DatabaseReference tokens = FirebaseDatabase.getInstance().getReference("Tokens");
+        Token data = new Token(token, true);
+        tokens.child(Common.currentUser.getPhone()).setValue(data);
     }
 
     private void showDialog() {

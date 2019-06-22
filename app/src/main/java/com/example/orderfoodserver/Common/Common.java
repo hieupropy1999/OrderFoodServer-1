@@ -7,6 +7,8 @@ import android.graphics.Paint;
 
 import com.example.orderfoodserver.Model.Request;
 import com.example.orderfoodserver.Model.User;
+import com.example.orderfoodserver.Remote.APIService;
+import com.example.orderfoodserver.Remote.FCMRetrofitClient;
 import com.example.orderfoodserver.Remote.IGeoCoordinates;
 import com.example.orderfoodserver.Remote.RetrofitClient;
 
@@ -22,6 +24,8 @@ public class Common {
 
     public  static final String baseUrl = "https://maps.googleapis.com";
 
+    public  static final String fcmUrl = "https://fcm.googleapis.com";
+
     public static String convertCodeToStatus(String status){
         if(status.equals("0"))
             return "Đang xử lí";
@@ -32,6 +36,10 @@ public class Common {
 
     public static IGeoCoordinates getGeoCodeservice() {
         return RetrofitClient.getClient(baseUrl).create(IGeoCoordinates.class);
+    }
+
+    public static APIService getFCMService() {
+        return FCMRetrofitClient.getClient(fcmUrl).create(APIService.class);
     }
 
     public static Bitmap scaleBitmap(Bitmap bitmap, int newWidth, int newHeight) {

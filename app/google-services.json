@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "423810179550-5rrek7ftfoet7gfiosdau20dk5v63dd9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.eat",
+            "certificate_hash": "275c3799109989f3da1edc83ba0f2ab39454fbd1"
+          }
+        },
+        {
           "client_id": "423810179550-1n0l0rrj0vdpb5tk2kgv37rpgf17vegp.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -51,6 +59,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "423810179550-qqbu1jv1vu0qcb25k1lrv1mpfao2natf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.orderfoodserver",
+            "certificate_hash": "275c3799109989f3da1edc83ba0f2ab39454fbd1"
+          }
+        },
         {
           "client_id": "423810179550-e8tsln385ssfmcq7e6tak1to09lo4mmr.apps.googleusercontent.com",
           "client_type": 1,
